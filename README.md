@@ -1,5 +1,36 @@
 This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
 
+## ImageSqueeze KMP (new)
+
+Core compression API now lives in [`shared/src/commonMain/kotlin/vinz/kmp/imagesqueezekmp/squeeze`](/Users/kevinmalik/AndroidStudioProjects/ImageSqueezeKMP/shared/src/commonMain/kotlin/vinz/kmp/imagesqueezekmp/squeeze) and targets Android, iOS, Desktop (JVM), and Web (JS).
+
+Main entry point:
+
+```kotlin
+import vinz.kmp.imagesqueezekmp.squeeze.CompressionFormat
+import vinz.kmp.imagesqueezekmp.squeeze.ImageSqueeze
+import vinz.kmp.imagesqueezekmp.squeeze.SqueezeResult
+
+suspend fun compressImage(bytes: ByteArray): ByteArray? {
+    return when (
+        val result = ImageSqueeze.compress(bytes) {
+            resolution(1280, 720)
+            quality(80)
+            size(500_000L)
+            format(CompressionFormat.JPEG)
+        }
+    ) {
+        is SqueezeResult.Success -> result.bytes
+        is SqueezeResult.Error -> null
+    }
+}
+```
+
+Notes:
+- API is byte-based (`ByteArray`) so it works on all targets, including Web.
+- Compression loop follows your Android algorithm: decode sampled bitmap -> optional EXIF rotation -> reduce quality iteratively until target size/min quality.
+- WEBP depends on platform encoder support (if unavailable, returns `SqueezeResult.Error(UNSUPPORTED_FORMAT)`).
+
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
   It contains several subfolders:
   - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
